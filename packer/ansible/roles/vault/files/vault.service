@@ -1,0 +1,26 @@
+[Unit]
+Description=HashiCorp Vault Server
+After=network-online.target
+
+[Service]
+EnvironmentFile=-/etc/sysconfig/vault
+User=vault
+Group=vault
+PrivateDevices=yes
+PrivateTmp=yes
+ProtectSystem=full
+ProtectHome=read-only
+SecureBits=keep-caps
+Capabilities=CAP_IPC_LOCK+ep
+CapabilityBoundingSet=CAP_SYSLOG CAP_IPC_LOCK
+NoNewPrivileges=yes
+LimitMEMLOCK=infinity
+ExecStart=/usr/local/bin/vault server $OPTIONS -config=/usr/local/etc/vault/config.hcl
+KillSignal=SIGINT
+TimeoutStopSec=30s
+Restart=on-failure
+StartLimitInterval=60s
+StartLimitBurst=3
+
+[Install]
+WantedBy=multi-user.target

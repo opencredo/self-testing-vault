@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<service>
+  <short>vault</short>
+  <description>Vault secures, stores, and tightly controls access to tokens, passwords, certificates, API keys, and other secrets in modern computing.</description>
+  <port protocol="tcp" port="8200-8201"/>
+</service>

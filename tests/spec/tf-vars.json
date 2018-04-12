@@ -1,0 +1,5 @@
+{
+  "instance_type": "t2.micro",
+  "vpc_id": "vpc-21946548",
+  "ip_address": "217.138.34.2"
+}

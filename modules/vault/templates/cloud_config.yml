@@ -1,0 +1,32 @@
+#cloud-config
+
+write_files:
+  - path: /etc/profile.d/vault.sh
+    content: |
+        export VAULT_CACERT=${public_certificate_location}
+  - path: /etc/sysconfig/vault
+    content: |
+        OPTIONS="-log-level=WARN"
+  - encoding: b64
+    content: ${vault_hcl}
+    owner: root:root
+    path: /usr/local/etc/vault/config.hcl
+    permissions: '0644'
+  - encoding: b64
+    content: ${public_certificate}
+    owner: root:root
+    path: ${public_certificate_location}
+    permissions: '0644'
+  - encoding: b64
+    content: ${private_certificate}
+    owner: vault:vault
+    path: ${private_certificate_location}
+    permissions: '0600'
+
+runcmd:
+  - echo "" >> /usr/local/etc/vault/config.hcl
+  # api_addr is the address of the server that other servers will _redirect_ clients to, if forwarding is not enabled for some reason
+  - echo "api_addr = \"https://$(curl -fs 169.254.169.254/2016-09-02/meta-data/public-ipv4):8200\"" >> /usr/local/etc/vault/config.hcl
+  # cluster_addr is the address of the server that other servers will _forward_ client requests to
+  - echo "cluster_addr = \"https://$(curl -fs 169.254.169.254/2016-09-02/meta-data/local-ipv4):8201\"" >> /usr/local/etc/vault/config.hcl
+  - systemctl start --no-block vault

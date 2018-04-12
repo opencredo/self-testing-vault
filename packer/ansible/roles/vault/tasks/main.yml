@@ -1,0 +1,88 @@
+- name: Update everything to the latest version
+  yum:
+    name: '*'
+    state: latest
+  become: yes
+
+- name: Install firewalld for firewalling local instance
+  package:
+    name: firewalld
+    state: latest
+  become: yes
+
+- name: Firewall should be running on every instance, allowing SSH and DHCP client access by default
+  service:
+    name: firewalld
+    state: started
+    enabled: yes
+  become: yes
+
+- name: Install unzip
+  package:
+    name: unzip
+    state: latest
+  become: yes
+
+- name: Download Vault
+  get_url:
+    url: "{{ vault_download_url }}"
+    checksum: "{{ vault_checksum }}"
+    dest: "/opt/vault_linux_amd64.zip"
+  become: yes
+
+- name: Extract Consul and Vault
+  unarchive:
+    src: "/opt/vault_linux_amd64.zip"
+    dest: "/usr/local/bin"
+    creates: "/usr/local/bin/vault"
+    remote_src: yes
+  become: yes
+
+- name: Create Vault group
+  group:
+    name: "{{ vault_user }}"
+  become: yes
+
+- name: Create Vault user
+  user:
+    name: "{{ vault_user }}"
+    group: "{{ vault_user }}"
+    system: yes
+    shell: /sbin/nologin
+  become: yes
+
+- name: Ensure configuration directory are present
+  file:
+    path: /usr/local/etc/vault
+    state: directory
+  become: yes
+
+- name: Copy Vault systemd service files
+  copy:
+    src: vault.service
+    dest: /usr/lib/systemd/system
+  become: yes
+
+- name: Reload systemd to pick up new service files
+  systemd:
+    daemon_reload: yes
+  become: yes
+
+- name: Add Vault firewall rules
+  copy:
+    src: vault.xml
+    dest: /etc/firewalld/services
+  become: yes
+
+- name: Restart firewalld to load new rules
+  service:
+    name: firewalld
+    state: reloaded
+  become: yes
+
+- name: Enable Vault firewall rules
+  firewalld:
+    service: vault
+    permanent: true
+    state: enabled
+  become: yes
